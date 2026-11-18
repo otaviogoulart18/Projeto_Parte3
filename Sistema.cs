@@ -1,0 +1,174 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+namespace SistemaCadastro
+{
+    public partial class Sistema : Form
+    {
+        int idAlterar;
+
+        public Sistema()
+        {
+            InitializeComponent();
+            
+        }
+        
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void btnCadastra_Click(object sender, EventArgs e)
+        {
+            marcador.Height = btnCadastra.Height;
+            marcador.Top = btnCadastra.Top;
+            tabControl1.SelectedTab = tabControl1.TabPages[0];
+        }
+        
+
+        private void btnBusca_Click(object sender, EventArgs e)
+        {
+            marcador.Height = btnBusca.Height;
+            marcador.Top = btnBusca.Top;
+            tabControl1.SelectedTab = tabControl1.TabPages[1];
+        }
+
+
+
+
+
+
+
+        private void Sistema_Load(object sender, EventArgs e)
+        {
+            listaCBGeneros();
+            lista_gridBandas();
+        }
+        public void listaCBGeneros()
+        {
+            ConectaBanco con = new ConectaBanco();
+            DataTable tabelaDados = new DataTable();
+            tabelaDados = con.listaGeneros();
+            cbGenero.DataSource = tabelaDados;
+            cbGenero.DisplayMember = "genero";
+            cbGenero.ValueMember = "idgenero";
+
+            cbAlteraGenero.DataSource = tabelaDados;
+            cbAlteraGenero.DisplayMember = "genero";
+            cbAlteraGenero.ValueMember = "idgenero";
+        }
+        void lista_gridBandas()
+        {
+            ConectaBanco con = new ConectaBanco();
+            dgBandas.DataSource = con.listaBandas;
+        }
+
+
+
+
+        private void txtBusca_TextChanged(object sender, EventArgs e)
+        {
+            (dgBandas.DataSource as DataTable).DefaultView.RowFilter =
+              string.Format("nome like '{0}%'", txtBusca.Text);
+        }
+
+        private void btnRemoveBanda_Click(object sender, EventArgs e)
+        {
+            int linha = dgBandas.CurrentRow.Index;
+            int id = Convert.ToInt32(
+                    dgBandas.Rows[linha].Cells["idbandas"].Value.ToString());
+            DialogResult resp = MessageBox.Show("Tem certeza que deseja excluir?",
+                "Remove Banda", MessageBoxButtons.OKCancel);
+            if (resp == DialogResult.OK)
+            {
+                ConectaBanco con = new ConectaBanco();
+                bool retorno = con.deletaBanda(id);
+                if (retorno == true)
+                {
+                    MessageBox.Show("Banda excluida com sucesso!");
+                    lista_gridBandas();
+                }// fim if retorno true
+                else
+                    MessageBox.Show(con.mensagem);
+            }// fim if Ok Cancela
+            else
+                MessageBox.Show("Exclusão cancelada");
+
+        }
+
+        private void btnAlterar_Click(object sender, EventArgs e)
+        {
+
+            int linha = dgBandas.CurrentRow.Index;
+            idAlterar =Convert.ToInt32
+            dgBandas.Rows[linha].Cells["idbandas"].Value.ToString());
+            txtAlteraNome.Text =
+                dgBandas.Rows[linha].Cells[ "nome"].Value.ToString() ;
+            txtAlteraIntegrantes.Text =
+                dgBandas.Rows[linha].Cells["integrantes"].Value.ToString();
+            txtAlteraRanking.Text =
+                dgBandas.Rows[linha].Cells["Ranking"].Value.ToString();
+            cbAlteraGenero.Text =
+                dgBandas.Rows[linha].Cells["genero"].Value.ToString();
+            tabControl1.SelectedTab = tabAlterar;
+
+         }
+
+         private void btnConfirmaAlteracao_Click(object sender, EventArgs e)
+        {
+            ConectaBanco con = new ConectaBanco();
+            Banda = novaBanda = new Banda();
+            novaBanda.Nome = txtAlteraNome.Text;
+            novaBanda.Integrantes = Convert.ToInt32(txtAlteraIntegrantes.Text)
+            novaBanda.Ranking = Convert.ToInt32(txtAlteraRanking.Text);
+            novaBanda.Genero = cbAlteraGenero.SelectedValue.ToString();
+            bool retorno = con.alteraBanda(novaBanda,idAlterar);
+            if (retorno == false)
+                MessageBox.Show(con.mensagem);
+            else
+                MessageBox.Show("Alteração realizada com sucesso");
+            lista_gridBandas();
+
+
+
+        }
+
+        private void bntAddGenero_Click(object sender, EventArgs e)
+        {
+          FrmAddGenero formGenero = new FrmAddGenero();
+            this.Hide();
+            formGenero.ShowDialog();
+            this.Close();
+        }
+        void limpaCampos()
+        {
+            txtnome.Clear();
+            cbGenero.Text = "";
+            txtintegrantes.Clear();
+            txtranking.Clear();
+        }
+
+        private void BtnConfirmaCadastro_Click(object sender, EventArgs e)
+        {
+            ConectaBanco con = new ConectaBanco();
+            Banda = novaBanda = new Banda();
+            novaBanda.Nome = txtBusca.Text;
+            novaBanda.Integrantes = Convert.ToInt32(txtintegrantes.Text)
+            novaBanda.Ranking = Convert.ToInt32(txtranking.Text);
+            novaBanda.Genero = cbGenero.SelectedValue.ToString();
+            bool retorno = con.insereBanda(novaBanda);
+            if (retorno == false)
+                MessageBox.Show(con.mensagem);
+            limpaCampos();
+            lista_gridBandas();
+                }
+    }
+}
